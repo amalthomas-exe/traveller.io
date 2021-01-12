@@ -35,6 +35,7 @@ def submit_f1():
         msg.showwarning("Traveller.io says","Please specify your email id")
     else:
         pnr = generate_PNR()
+        print(pnr)
         c.execute(('insert into flight_bookings values("{}","{}","{}","{}","{}","{}","{}",{},"{}",{},"{}","{}","{}")').format(pnr,name.get(),data1[2],data1[3],date_of_dep.get(),data1[5],data1[7],age.get(),gender.get(),mob.get(),email.get(),data1[0],data1[1]))
         adr = email.get()
         mail = [''' <html><head><title></title></head><body><p>Your flight booking from:'''+data1[2]+''' to:'''+data1[3]+''' on '''+date_of_dep.get()+''' has been confirmed.</p>
@@ -59,7 +60,8 @@ def submit_f2():
     elif email.get()=="":
         msg.showwarning("Traveller.io says","Please specify your email id")
     else:
-        pnr = generate_PNR
+        pnr = generate_PNR()
+        print(pnr)
         c.execute(('insert into flight_bookings values("{}","{}","{}","{}","{}","{}","{}",{},"{}",{},"{}","{}","{}")').format(pnr,name.get(),data2[2],data2[3],date_of_dep.get(),data2[5],data2[7],age.get(),gender.get(),mob.get(),email.get(),data2[0],data2[1]))
         adr = email.get()
         try:
@@ -85,7 +87,8 @@ def submit_f3():
     elif email.get()=="":
         msg.showwarning("Traveller.io says","Please specify your email id")
     else:
-        pnr = generate_PNR
+        pnr = generate_PNR()
+        print(pnr)
         c.execute(('insert into flight_bookings values("{}","{}","{}","{}","{}","{}","{}",{},"{}",{},"{}","{}","{}")').format(pnr,name.get(),data3[2],data3[3],date_of_dep.get(),data3[5],data3[7],age.get(),gender.get(),mob.get(),email.get(),data3[0],data3[1]))
         adr = email.get()
         mail = [''' <html><head><title></title></head><body><p>Your flight booking from:'''+data3[2]+''' to:'''+data3[3]+''' on '''+date_of_dep.get()+''' has been confirmed.</p>
