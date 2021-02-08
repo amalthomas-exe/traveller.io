@@ -5,9 +5,12 @@ Credits:
 2) Alan Johny - backend (database, schedules,etc)
 """
 
+from datetime import date
+from email.mime import text
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox as msg
+from tkcalendar import Calendar, DateEntry
 from PIL import ImageTk,Image
 from plyer import notification
 import mysql.connector as sqltor
@@ -21,6 +24,48 @@ def generate_PNR():
     b=random.randint(3232,64656)
     alp = ['SDF','SSF','THH','RGGT','EGS','RGRE','GGTBT']
     return random.choice(alp)+str(a)+str(b)
+
+def delete_booking():
+    global win_del
+    win_del = tk.Toplevel()
+    win_del.title("Delete Booking")
+    ttk.Label(win_del,text="Please enter the PNR of the flight you want to delete.").grid(column=0,row=0,pady=5,padx=2)
+    global pnr_del
+    pnr_del = tk.StringVar()
+    pnr_del_ent = ttk.Entry(win_del,textvariable=pnr_del,width=30)
+    pnr_del_ent.grid(row=0,column=1,padx=6,pady=5)
+    del_pnr_button = ttk.Button(win_del,text="Proceed",command=send_conf_email)
+    del_pnr_button.grid(column=1,row=1,pady=5,padx=5)
+
+def send_conf_email():
+    c.execute(f'SELECT * FROM flight_bookings where PNR="{pnr_del.get()}"')
+    global data_del
+    data_del = c.fetchall()
+    print(data_del)
+    if data_del==[]:
+        msg.showerror("Traveller.io says","No booking found with the specified PNR")
+    else:
+        global conf_code
+        a= random.randint(234,235556)
+        conf_code = random.choice(["A","B","C","D"])+str(a)
+        mail_del =[f'''<html><head><title></title></head><body><p>Dear {data_del[0][1]},<br>Your flight booking<br>From: {data_del[0][2]}<br>To: {data_del[0][3]}<br> on: {data_del[0][4]}<br> has been scheduled for deletion.To confirm and complete the deletion, please use the following confirmation code<br></p>Code: <b>{conf_code}</b></body></head></html>''']
+        mailer.send(data_del[0][10],"Flight Deletion mail",mail_del)
+        notification.notify(title = "Traveller_io",message = "You complete your booking deletion, please enter the confirmation code we have sent to your mail id.",app_icon = 'images\\travel.ico',timeout = 10)
+    ttk.Label(win_del,text="Please enter the confirmation code we have sent to your maid id").grid(column=0,row=2,padx=2,pady=6)
+    global del_code
+    del_code = tk.StringVar()
+    del_code_ent = ttk.Entry(win_del,textvariable=del_code,width=15)
+    del_code_ent.grid(column=1,row=2,padx=2,pady=5)
+    del_button_final = ttk.Button(win_del,text="Delete",command=delete_booking_final)
+    del_button_final.grid(row=3,column=1,padx=3)
+
+def delete_booking_final():
+    if del_code.get()==conf_code:
+        c.execute(f'DELETE FROM flight_bookings where PNR="{pnr_del.get()}"')
+        con.commit()
+        msg.showinfo("Traveller.io says","Booking deleted successfully!")
+    else:
+        msg.showerror("Traveller.io says","Wrong confirmation code!!")
 
 def submit_f1():
     if name.get()=="":
@@ -36,10 +81,10 @@ def submit_f1():
     else:
         pnr = generate_PNR()
         print(pnr)
-        c.execute(('insert into flight_bookings values("{}","{}","{}","{}","{}","{}","{}",{},"{}",{},"{}","{}","{}")').format(pnr,name.get(),data1[2],data1[3],date_of_dep.get(),data1[5],data1[7],age.get(),gender.get(),mob.get(),email.get(),data1[0],data1[1]))
+        c.execute(('insert into flight_bookings values("{}","{}","{}","{}","{}","{}","{}",{},"{}",{},"{}","{}","{}")').format(pnr,name.get(),data1[2],data1[3],date_dep,data1[5],data1[7],age.get(),gender.get(),mob.get(),email.get(),data1[0],data1[1]))
         adr = email.get()
-        mail = [''' <html><head><title></title></head><body><p>Your flight booking from:'''+data1[2]+''' to:'''+data1[3]+''' on '''+date_of_dep.get()+''' has been confirmed.</p>
-    <p> Your itenerary is as below:</p>PNR:'''+pnr+'''<br>Airline:'''+data1[1]+'''<br> Flight No.:'''+data1[0]+'''<br>Name:'''+name.get()+'''<br>'''+'''From:'''+data1[2]+'''<br>'''+'''To:'''+data1[3]+'''<br>'''+'''Date of departure:'''+date_of_dep.get()+'''<br>'''+'''Departure time:'''+str(data1[5])+'''<br>'''+'''Arrival Time:'''+str(data1[7])+'''<br>'''+'''<p><b><u>Please take note of the following</u></b><br>''']
+        mail = [''' <html><head><title></title></head><body><p>Your flight booking from:'''+data1[2]+''' to:'''+data1[3]+''' on '''+date_dep+''' has been confirmed.</p>
+    <p> Your itenerary is as below:</p>PNR:'''+pnr+'''<br>Airline:'''+data1[1]+'''<br> Flight No.:'''+data1[0]+'''<br>Name:'''+name.get()+'''<br>'''+'''From:'''+data1[2]+'''<br>'''+'''To:'''+data1[3]+'''<br>'''+'''Date of departure:'''+date_dep+'''<br>'''+'''Departure time:'''+str(data1[5])+'''<br>'''+'''Arrival Time:'''+str(data1[7])+'''<br>'''+'''<p><b><u>Please take note of the following</u></b><br>''']
         try:
             mailer.send(adr,'Flight confirmation',mail)
             notification.notify(title = "Traveller_io",message = "Congrats! You booking has been confirmed. A confirmation mail has been sent to your inbox",app_icon = 'images\\travel.ico',timeout = 10)
@@ -62,11 +107,11 @@ def submit_f2():
     else:
         pnr = generate_PNR()
         print(pnr)
-        c.execute(('insert into flight_bookings values("{}","{}","{}","{}","{}","{}","{}",{},"{}",{},"{}","{}","{}")').format(pnr,name.get(),data2[2],data2[3],date_of_dep.get(),data2[5],data2[7],age.get(),gender.get(),mob.get(),email.get(),data2[0],data2[1]))
+        c.execute(('insert into flight_bookings values("{}","{}","{}","{}","{}","{}","{}",{},"{}",{},"{}","{}","{}")').format(pnr,name.get(),data2[2],data2[3],date_dep,data2[5],data2[7],age.get(),gender.get(),mob.get(),email.get(),data2[0],data2[1]))
         adr = email.get()
         try:
-            mail = [''' <html><head><title></title></head><body><p>Your flight booking from:'''+data2[2]+''' to:'''+data2[3]+''' on '''+date_of_dep.get()+''' has been confirmed.</p>
-            <p> Your itenerary is as below:</p>PNR:'''+pnr+'''<br>Airline:'''+data2[1]+'''<br> Flight No.:'''+data2[0]+'''<br>Name:'''+name.get()+'''<br>'''+'''From:'''+data2[2]+'''<br>'''+'''To:'''+data2[3]+'''<br>'''+'''Date of departure:'''+date_of_dep.get()+'''<br>'''+'''Departure time:'''+str(data2[5])+'''<br>'''+'''Arrival Time:'''+str(data2[7])+'''<br>'''+'''<p><b><u>Please take note of the following</u></b><br>''']
+            mail = [''' <html><head><title></title></head><body><p>Your flight booking from:'''+data2[2]+''' to:'''+data2[3]+''' on '''+date_dep+''' has been confirmed.</p>
+            <p> Your itenerary is as below:</p>PNR:'''+pnr+'''<br>Airline:'''+data2[1]+'''<br> Flight No.:'''+data2[0]+'''<br>Name:'''+name.get()+'''<br>'''+'''From:'''+data2[2]+'''<br>'''+'''To:'''+data2[3]+'''<br>'''+'''Date of departure:'''+date_dep+'''<br>'''+'''Departure time:'''+str(data2[5])+'''<br>'''+'''Arrival Time:'''+str(data2[7])+'''<br>'''+'''<p><b><u>Please take note of the following</u></b><br>''']
             mailer.send(adr,'Flight confirmation',mail)
             con.commit()
             notification.notify(title = "Traveller_io",message = "Congrats! You booking has been confirmed. A confirmation mail has been sent to your inbox",app_icon = 'images\\travel.ico',timeout = 10)
@@ -89,10 +134,10 @@ def submit_f3():
     else:
         pnr = generate_PNR()
         print(pnr)
-        c.execute(('insert into flight_bookings values("{}","{}","{}","{}","{}","{}","{}",{},"{}",{},"{}","{}","{}")').format(pnr,name.get(),data3[2],data3[3],date_of_dep.get(),data3[5],data3[7],age.get(),gender.get(),mob.get(),email.get(),data3[0],data3[1]))
+        c.execute(('insert into flight_bookings values("{}","{}","{}","{}","{}","{}","{}",{},"{}",{},"{}","{}","{}")').format(pnr,name.get(),data3[2],data3[3],date_dep,data3[5],data3[7],age.get(),gender.get(),mob.get(),email.get(),data3[0],data3[1]))
         adr = email.get()
-        mail = [''' <html><head><title></title></head><body><p>Your flight booking from:'''+data3[2]+''' to:'''+data3[3]+''' on '''+date_of_dep.get()+''' has been confirmed.</p>
-    <p> Your itenerary is as below:</p>PNR:'''+pnr+'''<br>Airline:'''+data3[1]+'''<br> Flight No.:'''+data3[0]+'''<br>Name:'''+name.get()+'''<br>'''+'''From:'''+data3[2]+'''<br>'''+'''To:'''+data3[3]+'''<br>'''+'''Date of departure:'''+date_of_dep.get()+'''<br>'''+'''Departure time:'''+str(data3[5])+'''<br>'''+'''Arrival Time:'''+str(data3[7])+'''<br>'''+'''<p><b><u>Please take note of the following</u></b><br>''']
+        mail = [''' <html><head><title></title></head><body><p>Your flight booking from:'''+data3[2]+''' to:'''+data3[3]+''' on '''+date_dep+''' has been confirmed.</p>
+    <p> Your itenerary is as below:</p>PNR:'''+pnr+'''<br>Airline:'''+data3[1]+'''<br> Flight No.:'''+data3[0]+'''<br>Name:'''+name.get()+'''<br>'''+'''From:'''+data3[2]+'''<br>'''+'''To:'''+data3[3]+'''<br>'''+'''Date of departure:'''+date_dep+'''<br>'''+'''Departure time:'''+str(data3[5])+'''<br>'''+'''Arrival Time:'''+str(data3[7])+'''<br>'''+'''<p><b><u>Please take note of the following</u></b><br>''']
         try:
             mailer.send(adr,'Flight confirmation',mail)
             notification.notify(title = "Traveller_io",message = "Congrats! You booking has been confirmed. A confirmation mail has been sent to your inbox",app_icon = 'images\\travel.ico',timeout = 10)
@@ -122,7 +167,7 @@ def book_1():
     ttk.Label(win_book1,text="Airline:",foreground = "blue").grid(column=0,row=2,pady=3)
     ttk.Label(win_book1,text=data1[1],foreground = "green").grid(column=1,row=2,pady=3)
     ttk.Label(win_book1,text="Date of departure:",foreground = "blue").grid(column=0,row=3,pady=3)
-    ttk.Label(win_book1,text=date_of_dep.get(),foreground = "green").grid(column=1,row=3,pady=3)
+    ttk.Label(win_book1,text=date_dep,foreground = "green").grid(column=1,row=3,pady=3)
     ttk.Label(win_book1,text="From:",foreground = "blue").grid(column=0,row=4,pady=3)
     ttk.Label(win_book1,text=data1[2],foreground = "green").grid(column=1,row=4,pady=3)
     ttk.Label(win_book1,text="To:",foreground = "blue").grid(column=0,row=5,pady=3)
@@ -180,7 +225,7 @@ def book_2():
     ttk.Label(win_book1,text="Airline:",foreground = "blue").grid(column=0,row=2,pady=3)
     ttk.Label(win_book1,text=data2[1],foreground = "green").grid(column=1,row=2,pady=3)
     ttk.Label(win_book1,text="Date of departure:",foreground = "blue").grid(column=0,row=3,pady=3)
-    ttk.Label(win_book1,text=date_of_dep.get(),foreground = "green").grid(column=1,row=3,pady=3)
+    ttk.Label(win_book1,text=date_dep,foreground = "green").grid(column=1,row=3,pady=3)
     ttk.Label(win_book1,text="From:",foreground = "blue").grid(column=0,row=4,pady=3)
     ttk.Label(win_book1,text=data2[2],foreground = "green").grid(column=1,row=4,pady=3)
     ttk.Label(win_book1,text="To:",foreground = "blue").grid(column=0,row=5,pady=3)
@@ -238,7 +283,7 @@ def book_3():
     ttk.Label(win_book1,text="Airline:",foreground = "blue").grid(column=0,row=2,pady=3)
     ttk.Label(win_book1,text=data3[1],foreground = "green").grid(column=1,row=2,pady=3)
     ttk.Label(win_book1,text="Date of departure:",foreground = "blue").grid(column=0,row=3,pady=3)
-    ttk.Label(win_book1,text=date_of_dep.get(),foreground = "green").grid(column=1,row=3,pady=3)
+    ttk.Label(win_book1,text=date_dep,foreground = "green").grid(column=1,row=3,pady=3)
     ttk.Label(win_book1,text="From:",foreground = "blue").grid(column=0,row=4,pady=3)
     ttk.Label(win_book1,text=data3[2],foreground = "green").grid(column=1,row=4,pady=3)
     ttk.Label(win_book1,text="To:",foreground = "blue").grid(column=0,row=5,pady=3)
@@ -288,7 +333,10 @@ def resize_image(event):
     bg_label.image = photo
 
 def search_flight():
-        if date_of_dep.get() == "":
+        date_dep_lst = str(date_of_dep_ent.get_date()).split("-")
+        global date_dep
+        date_dep = date_dep_lst[2]+"-"+date_dep_lst[1]+"-"+date_dep_lst[0]
+        if date_dep == "":
             msg.showwarning("Traveller_io says:","Please specify the date of departure.")
         if city_dep.get()=="":
             msg.showwarning("Traveller_io says:","Please specify the city of departure.")
@@ -328,7 +376,7 @@ def search_flight():
                 ttk.Label(win_flight_book,text="To:",foreground = "blue").grid(column=0,row=6)
                 ttk.Label(win_flight_book,text=data1[3],foreground = "green").grid(column=1,row=6)
                 ttk.Label(win_flight_book,text="Date of departure:",foreground = "blue").grid(column=0,row=7)
-                ttk.Label(win_flight_book,text=date_of_dep.get(),foreground = "green").grid(column=1,row=7)
+                ttk.Label(win_flight_book,text=date_dep,foreground = "green").grid(column=1,row=7)
                 ttk.Label(win_flight_book,text="Time of Departure:",foreground = "blue").grid(column=0,row=8)
                 ttk.Label(win_flight_book,text=data1[5],foreground = "green").grid(column=1,row=8)
                 ttk.Label(win_flight_book,text="Time of Arrival:",foreground = "blue").grid(column=0,row=9)
@@ -347,7 +395,7 @@ def search_flight():
                 ttk.Label(win_flight_book,text="To:",foreground = "blue").grid(column=4,row=6)
                 ttk.Label(win_flight_book,text=data2[3],foreground = "green").grid(column=5,row=6)
                 ttk.Label(win_flight_book,text="Date of departure:",foreground = "blue").grid(column=4,row=7)
-                ttk.Label(win_flight_book,text=date_of_dep.get(),foreground = "green").grid(column=5,row=7)
+                ttk.Label(win_flight_book,text=date_dep,foreground = "green").grid(column=5,row=7)
                 ttk.Label(win_flight_book,text="Time of Departure:",foreground = "blue").grid(column=4,row=8)
                 ttk.Label(win_flight_book,text=data2[5],foreground = "green").grid(column=5,row=8)
                 ttk.Label(win_flight_book,text="Time of Arrival:",foreground = "blue").grid(column=4,row=9)
@@ -366,7 +414,7 @@ def search_flight():
                 ttk.Label(win_flight_book,text="To:",foreground = "blue").grid(column=8,row=6)
                 ttk.Label(win_flight_book,text=data3[3],foreground = "green").grid(column=9,row=6)
                 ttk.Label(win_flight_book,text="Date of departure:",foreground = "blue").grid(column=8,row=7)
-                ttk.Label(win_flight_book,text=date_of_dep.get(),foreground = "green").grid(column=9,row=7)
+                ttk.Label(win_flight_book,text=date_dep,foreground = "green").grid(column=9,row=7)
                 ttk.Label(win_flight_book,text="Time of Departure:",foreground = "blue").grid(column=8,row=8)
                 ttk.Label(win_flight_book,text=data3[5],foreground = "green").grid(column=9,row=8)
                 ttk.Label(win_flight_book,text="Time of Arrival:",foreground = "blue").grid(column=8,row=9)
@@ -392,15 +440,14 @@ def optsel():
     bg_label.bind('<Configure>', resize_image)
     win_flight.title('Traveller.io Flight booking portal')
     ttk.Label(win_flight,text='Enter the details below to filter flights available:',foreground = "red",font = ('times',16)).grid(row=0,column=0,padx = 7,pady = 5)
-    global date_of_dep
-    date_of_dep = tk.StringVar()
     global city_dep
     city_dep = tk.StringVar()
     global city_arr
     city_arr = tk.StringVar()
     
-    ttk.Label(win_flight,text = "Enter Date of departure in dd-mm-yyyy format:",foreground = "blue",font = ('times',12)).grid(column=0,row=3)
-    date_of_dep_ent = ttk.Entry(win_flight,width = 10,textvariable = date_of_dep)
+    ttk.Label(win_flight,text = "Select Date of departure:",foreground = "blue",font = ('times',12)).grid(column=0,row=3)
+    global date_of_dep_ent
+    date_of_dep_ent = DateEntry(win_flight,width = 10,background='darkblue',foreground='white', borderwidth=2)
     date_of_dep_ent.grid(column=0,row=4,pady = 5)
     ttk.Label(win_flight,text="Choose city of departure",foreground = "blue",font = ('times',12)).grid(column=0,row=6)
     city_dep_ent = ttk.Combobox(win_flight,width = 27,textvariable = city_dep,state = 'readonly')
@@ -428,5 +475,7 @@ bg_main_label.image = bg_main
 ttk.Label(win_main,text="Welcome to Traveller.io flight reservation portal",foreground = "red",font = ('times',16)).grid(column=0,row=0)
 start = ttk.Button(win_main,text = "Book now",command = optsel)
 start.grid(column = 0, row = 5,padx = 5,pady=5)
+delete = ttk.Button(win_main,text="Delete Booking",command=delete_booking)
+delete.grid(column=0,row=6,padx=5,pady=5)
 
 win_main.mainloop()
