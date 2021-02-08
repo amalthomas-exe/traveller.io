@@ -8,7 +8,7 @@ Credits:
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox as msg
-from tkcalendar import Calendar, DateEntry
+from tkcalendar import DateEntry
 from PIL import ImageTk,Image
 from plyer import notification
 import sqlite3
