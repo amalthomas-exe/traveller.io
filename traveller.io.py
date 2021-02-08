@@ -5,19 +5,17 @@ Credits:
 2) Alan Johny - backend (database, schedules,etc)
 """
 
-from datetime import date
-from email.mime import text
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox as msg
 from tkcalendar import Calendar, DateEntry
 from PIL import ImageTk,Image
 from plyer import notification
-import mysql.connector as sqltor
+import sqlite3
 import yagmail
 import random
 mailer = yagmail.SMTP('thomasamal856@gmail.com')         #connecting to SMTP server
-con = sqltor.connect(host='localhost',user='root',passwd='amal2003',database='traveller_io')  #connecting to MySQL server
+con = sqlite3.connect("traveller_io.db")  #connecting to MySQL server
 c = con.cursor()
 def generate_PNR():
     a=random.randint(23,43)
@@ -345,7 +343,7 @@ def search_flight():
         elif city_dep.get() == city_arr.get():
             msg.showwarning("Travrller.io says","City of departure cannot be the same as city of arrival.")
         else:
-            con = sqltor.connect(host='localhost',user='root',passwd='amal2003',database='traveller_io')
+            con = sqlite3.connect("traveller_io.db")
             c = con.cursor()
             c.execute(('select * from flight_schedule where city_dep="{}" and city_arr= "{}"').format(city_dep.get(),city_arr.get()))
             global data1
