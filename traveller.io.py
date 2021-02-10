@@ -15,7 +15,7 @@ import sqlite3
 import yagmail
 import random
 mailer = yagmail.SMTP('thomasamal856@gmail.com')         #connecting to SMTP server
-con = sqlite3.connect("traveller_io.db")  #connecting to MySQL server
+con = sqlite3.connect("database\\traveller_io.db")  #connecting to MySQL server
 c = con.cursor()
 def generate_PNR():
     a=random.randint(23,43)
@@ -343,7 +343,7 @@ def search_flight():
         elif city_dep.get() == city_arr.get():
             msg.showwarning("Travrller.io says","City of departure cannot be the same as city of arrival.")
         else:
-            con = sqlite3.connect("traveller_io.db")
+            con = sqlite3.connect("database\\traveller_io.db")
             c = con.cursor()
             c.execute(('select * from flight_schedule where city_dep="{}" and city_arr= "{}"').format(city_dep.get(),city_arr.get()))
             global data1
