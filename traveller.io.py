@@ -8,13 +8,19 @@ Credits:
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox as msg
-from tkcalendar import DateEntry
+import keyring
+from tkcalendar import DateEntry  #pip install tkcalender
 from PIL import ImageTk,Image
 from plyer import notification
+import pickle
 import sqlite3
 import yagmail
+import cryptocode
 import random
-mailer = yagmail.SMTP('thomasamal856@gmail.com')         #connecting to SMTP server
+key="key123420202021"
+f = open("database\\data.dat","rb")
+data = pickle.load(f)
+mailer = yagmail.SMTP(cryptocode.decrypt(data["id"],key),cryptocode.decrypt(data["passwd"],key))         #connecting to SMTP server
 con = sqlite3.connect("database\\traveller_io.db")  #connecting to MySQL server
 c = con.cursor()
 def generate_PNR():
